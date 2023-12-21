@@ -21,5 +21,5 @@ oscsend localhost 4001 /oled/setscreen i 1
 oscsend localhost 4001 /oled/aux/line/2 s "stopping"
 oscsend localhost 4001 /oled/aux/line/3 s "VNC"
 
-killall Xvnc
+killall vncserver-virtual
 $SCRIPTS_DIR/stop-gui.sh

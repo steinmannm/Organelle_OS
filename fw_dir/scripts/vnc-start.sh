@@ -23,5 +23,5 @@ oscsend localhost 4001 /oled/aux/line/3 s "VNC"
 cp -R ~/.vnc /tmp
 export HOME=/tmp
 
-vncserver -geometry 1920x1080
+vncserver-virtual -geometry 1920x1080
 
