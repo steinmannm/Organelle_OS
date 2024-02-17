@@ -42,6 +42,9 @@ sudo reboot
 ```
 
 ## Fix WM8731 driver
+Make sure to use a kernel source version matching to the installed kernel.   
+git --branch ... and module paths need to be adapted accordingly.
+
 ### Compile the missing kernel module wm8731-spi  
 [https://www.raspberrypi.com/documentation/computers/linux_kernel.html](url)
 
@@ -49,14 +52,14 @@ sudo reboot
 sudo apt install git bc bison flex libssl-dev make libncurses-dev
 mkdir src
 cd src
-git clone --depth=1 https://github.com/raspberrypi/linux
+git clone --depth=1 --branch rpi-6.6.y https://github.com/raspberrypi/linux
 cd linux
 KERNEL=kernel7
 make bcm2709_defconfig
 sed -i '/# CONFIG_SND_SOC_WM8731_SPI is not set/c\CONFIG_SND_SOC_WM8731_SPI=m' .config
-make prepare
-make modules_prepare
-make -C /home/music/src/linux M=/home/music/src/linux/sound/soc/codecs
+make -j4 prepare
+make -j4 modules_prepare
+make -j4 -C /home/music/src/linux M=/home/music/src/linux/sound/soc/codecs KBUILD_MODPOST_WARN=1
 sudo make -C /home/music/src/linux M=/home/music/src/linux/sound/soc/codecs modules_install
 sudo depmod -A
 ```
@@ -64,7 +67,7 @@ sudo depmod -A
 ### Patch snd-soc-audioinjector-pi-soundcard.ko.xz
 ```
 git clone https://github.com/critterandguitari/Organelle_M_rootfs.git
-cd /lib/modules/6.1.68-v7+/kernel/sound/soc/bcm
+cd /lib/modules/6.6.16-v7+/kernel/sound/soc/bcm
 sudo unxz snd-soc-audioinjector-pi-soundcard.ko.xz
 sudo ~/Organelle_M_rootfs/audio/fixit.sh ./snd-soc-audioinjector-pi-soundcard.ko
 sudo xz snd-soc-audioinjector-pi-soundcard.ko
@@ -201,6 +204,14 @@ Disable services
 sudo systemctl disable cups.service cups-browsed.service
 ```
 ---
+
+
+## Additional stuff
+'''
+sudo apt install 
+
+
+
 
 ## To Do
 
