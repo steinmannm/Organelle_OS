@@ -43,7 +43,7 @@ sudo reboot
 
 ## Fix WM8731 driver
 Make sure to use a kernel source version matching to the installed kernel.   
-git --branch ... and module paths need to be adapted accordingly.
+git --branch ... needs to be adapted accordingly.
 
 ### Compile the missing kernel module wm8731-spi  
 [https://www.raspberrypi.com/documentation/computers/linux_kernel.html](url)
@@ -62,12 +62,14 @@ make -j4 modules_prepare
 make -j4 -C /home/music/src/linux M=/home/music/src/linux/sound/soc/codecs KBUILD_MODPOST_WARN=1
 sudo make -C /home/music/src/linux M=/home/music/src/linux/sound/soc/codecs modules_install
 sudo depmod -A
+kernelversion=$(make kernelversion)
 ```
 
 ### Patch snd-soc-audioinjector-pi-soundcard.ko.xz
 ```
+cd ~/src
 git clone https://github.com/critterandguitari/Organelle_M_rootfs.git
-cd /lib/modules/6.6.16-v7+/kernel/sound/soc/bcm
+cd /lib/modules/$kernelversion-v7+/kernel/sound/soc/bcm
 sudo unxz snd-soc-audioinjector-pi-soundcard.ko.xz
 sudo ~/Organelle_M_rootfs/audio/fixit.sh ./snd-soc-audioinjector-pi-soundcard.ko
 sudo xz snd-soc-audioinjector-pi-soundcard.ko
@@ -79,9 +81,14 @@ sudo cp ~/Organelle_M_rootfs/audio/audioinjector-wm8731-audio-spi-overlay.dts /b
 sudo dtc -@ -I dts -O dtb -o /boot/overlays/wm8731-spi.dtbo /boot/audioinjector-wm8731-audio-spi-overlay.dts
 ```
 
+### Disable automatic kernel updates (unconfirmed)
+```
+sudo apt-mark hold raspberrypi-bootloader raspberrypi-kernel raspberrypi-kernel-headers
+```
+
 ### Edit config.txt
 ```
-sudo nano /boot/config.txt
+sudo nano /boot/firmware/config.txt
 ```
 comment out:  
 ```
