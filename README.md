@@ -2,11 +2,21 @@
 
 still incomplete
 
-**Manual**  
+**Original instructions**  
 [https://github.com/critterandguitari/Organelle_M_rootfs/blob/master/steps.md](url)
 
-**PiGen** (works for Buster only)  
+**PiGen** (Debian Buster only)  
 [https://github.com/mogenson/organelle-m-pi-gen](url)
+
+**Notes**   
+Kernel 6.6.18:
+- udev rules for gpiomem need to be changes --> added to Organelle_OS rootfs overlay
+
+**64-bit**   
+- externals in patches not compatible
+- deken externals for aarch64 not available
+- wiringPi doesn't work properly because of missing "Hardware" line in /proc/cpuinfo --> fixed in forked repo
+- OG externals are compiled for 32bit --> some can be manually recompiled from [https://github.com/critterandguitari/Organelle_Externals](url), others still open (but not important)
 
 
 ## SD card creation
@@ -17,22 +27,23 @@ still incomplete
 
 ## Basic setup
 ```
+sudo apt update
+sudo apt upgrade
+
+sudo passwd root
+	music
+
 sudo raspi-config
 ```
 - enable WLAN
-- enable VNC
 - console auto-login
+- enable VNC
 - enable SPI
 - enable I2C
 - disable serial login
 - enable serial interface
 
 ```
-sudo apt update
-sudo apt upgrade
-sudo passwd root
-	music
-
 sudo apt install git
 git config --global user.email "mxs@gmx.de"
 git config --global user.name "steinmannm"
@@ -43,7 +54,7 @@ sudo reboot
 
 ## Fix WM8731 driver
 Make sure to use a kernel source version matching to the installed kernel.   
-git --branch ... needs to be adapted accordingly.
+git --branch / git checkout ... needs to be adapted accordingly.
 
 ### Compile the missing kernel module wm8731-spi  
 [https://www.raspberrypi.com/documentation/computers/linux_kernel.html](url)
@@ -54,8 +65,19 @@ mkdir src
 cd src
 git clone --depth=1 --branch rpi-6.6.y https://github.com/raspberrypi/linux
 cd linux
+
+```
+for 32-bit kernel:
+```
 KERNEL=kernel7
 make bcm2709_defconfig
+```
+for 64-bit kernel: 
+```
+KERNEL=kernel8
+make bcm2711_defconfig
+```
+```
 sed -i '/# CONFIG_SND_SOC_WM8731_SPI is not set/c\CONFIG_SND_SOC_WM8731_SPI=m' .config
 make -j4 prepare
 make -j4 modules_prepare
@@ -69,15 +91,24 @@ kernelversion=$(make kernelversion)
 ```
 cd ~/src
 git clone https://github.com/critterandguitari/Organelle_M_rootfs.git
+```
+for 32-bit kernel:
+```
 cd /lib/modules/$kernelversion-v7+/kernel/sound/soc/bcm
+```
+for 64-bit kernel: 
+```
+cd /lib/modules/$kernelversion-v8+/kernel/sound/soc/bcm
+```
+```
 sudo unxz snd-soc-audioinjector-pi-soundcard.ko.xz
-sudo ~/Organelle_M_rootfs/audio/fixit.sh ./snd-soc-audioinjector-pi-soundcard.ko
+sudo ~/src/Organelle_M_rootfs/audio/fixit.sh ./snd-soc-audioinjector-pi-soundcard.ko
 sudo xz snd-soc-audioinjector-pi-soundcard.ko
 ```
 
 ### Install device tree overlay
 ```
-sudo cp ~/Organelle_M_rootfs/audio/audioinjector-wm8731-audio-spi-overlay.dts /boot
+sudo cp ~/src/Organelle_M_rootfs/audio/audioinjector-wm8731-audio-spi-overlay.dts /boot
 sudo dtc -@ -I dts -O dtb -o /boot/overlays/wm8731-spi.dtbo /boot/audioinjector-wm8731-audio-spi-overlay.dts
 ```
 
@@ -88,7 +119,7 @@ sudo apt-mark hold raspberrypi-bootloader raspberrypi-kernel raspberrypi-kernel-
 
 ### Edit config.txt
 ```
-sudo nano /boot/firmware/config.txt
+sudo nano /boot/config.txt
 ```
 comment out:  
 ```
@@ -120,12 +151,13 @@ alsamixer
 ```
 - master = 0dB
 - Master Playback on
-- Sidetone 
+- Sidetone off
 - Mic boost 20dB
 - Input Mux Line in
 - Output Mixer on
 ```
 speaker-test
+   (doesn't work here with internal speaker yet)
 ```
 
 ## Installation of packages
@@ -133,7 +165,7 @@ speaker-test
 sudo apt install zip jwm xinit x11-utils x11-xserver-utils lxterminal pcmanfm adwaita-icon-theme gnome-themes-extra gtk-theme-switch conky libasound2-dev liblo-dev liblo-tools python3-liblo python3-pip mpg123 dnsmasq hostapd cython3 iptables python3-cherrypy3 wish jackd2 luarocks csound supercollider nodejs
 
 cd ~/src
-git clone https://github.com/WiringPi/WiringPi
+git clone https://github.com/steinmannm/WiringPi
 cd WiringPi
 sudo ./build
 ```
@@ -170,6 +202,7 @@ rm -fr Patches/README.md
 sudo visudo
     music ALL=(ALL) NOPASSWD: ALL
 
+sudo mkfs.ext4 /dev/mmcblk0p3
 sudo nano /etc/fstab
     /dev/mmcblk0p3 /sdcard  ext4 defaults,noatime 0 0
 
@@ -190,6 +223,7 @@ sudo systemctl daemon-reload
 
 ## Deploy Organelle_OS
 ```
+cd
 git clone https://github.com/steinmannm/Organelle_OS
 cd Organelle_OS/
 git checkout bookworm
@@ -201,15 +235,17 @@ ln -s fw_dir/scripts/ scripts
 sudo sh -c "echo '/opt/vc/lib' > /etc/ld.so.conf.d/00-vmcs.conf"
 sudo ldconfig
 ```
+Disable services
+```
+sudo systemctl disable cups.service cups-browsed.service
+sudo systemctl disable vncserver-x11-serviced.service
+```
+
 in vncserver terminal: 
 ```
 gtk-theme-switch2 /usr/share/themes/Adwaita
 ```
 
-Disable services
-```
-sudo systemctl disable cups.service cups-browsed.service
-```
 ---
 
 
@@ -245,7 +281,6 @@ cat /dev/null > ~/.bash_history && history -c && exit
 
 
 sudo systemctl disable hciuart.service
-sudo systemctl disable vncserver-x11-serviced.service
 systemctl disable dnsmasq.service
 systemctl disable hostapd.service
 systemctl disable dhcpcd.service
