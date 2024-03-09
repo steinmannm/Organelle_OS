@@ -87,6 +87,7 @@ sudo depmod -A
 kernelversion=$(make kernelversion)
 ```
 
+
 ### Patch snd-soc-audioinjector-pi-soundcard.ko.xz
 ```
 cd ~/src
@@ -246,13 +247,85 @@ in vncserver terminal:
 gtk-theme-switch2 /usr/share/themes/Adwaita
 ```
 
+fix circle icon not showing up in Pd (tcl/tk doesn't like the adwaita circle icon for some reason, so just rename it to force fallback)
+```
+sudo mv /usr/share/icons/Adwaita/cursors/circle /usr/share/icons/Adwaita/cursors/circleORIG
+```
+
 ---
 
+## Additional packages
 
-## Additional stuff
-'''
-sudo apt install 
 
+### ELSE library
+```
+cd ~/src
+git clone https://github.com/porres/pd-else
+git clone https://github.com/pure-data/pd-lib-builder
+cd pd-else/
+git checkout v.1.0-rc11
+<fix sfz and sfont chdir bug>
+make install objectsdir=~/Pd/externals
+sudo apt install cmake
+make -j4 sfz-install plaits-install objectsdir=~/Pd/externals
+
+cd ~/src
+git clone https://github.com/FluidSynth/fluidsynth
+cd fluidsynth
+git checkout v2.3.4
+sudo apt install cmake libglib2.0-dev libsndfile1-dev patchelf
+mkdir build
+cd build
+cmake -Denable-libsndfile=on -Denable-jack=off -Denable-alsa=off -Denable-oss=off -Denable-pulseaudio=off -Denable-ladspa=off -Denable-aufile=off -Denable-network=off -Denable-ipv6=off -Denable-getopt=off -Denable-sdl2=off -Denable-threads=off ..
+sudo make -j4 install
+sudo ldconfig
+
+cd ~/src/pd-else/Code_source/Compiled/audio/sfont~
+make PDLIBDIR=$HOME/Pd/externals install
+make PDLIBDIR=$HOME/Pd/externals localdep_linux
+mv ~/Pd/externals/sfont~/* ~/Pd/externals/else
+rm -r sfont~/
+```
+
+### Jack clients
+```
+sudo apt install setbfree jalv mda-lv2 zynaddsubfx
+```
+
+
+
+## Optional: Install wlan driver for RTL8723BU (Edimax EW-7611ULB)
+Install Kernel Headers for future module compilation
+```
+copy kernel sources to /usr/src/linux-headers-....
+ln -s /lib/modules/version..../build  to /usr/src/......
+
+```
+follow [https://github.com/lwfinger/rtl8723bu](url)
+
+
+## Optional: Bluetooth MIDI
+[https://neuma.studio/raspberry-pi-as-usb-bluetooth-midi-host/](url)
+
+### Bluetooth LE (not recommended, no security)
+```
+cd ~/src
+git clone https://github.com/oxesoft/bluez
+sudo apt-get install -y libusb-dev libdbus-1-dev libglib2.0-dev libudev-dev libical-dev libreadline-dev
+cd bluez
+./bootstrap
+./configure --enable-midi --prefix=/usr --mandir=/usr/share/man --sysconfdir=/etc --localstatedir=/var
+make
+sudo make install
+
+```
+
+### Bluetooth
+```
+sudo apt install pi-bluetooth
+bluetoothctl
+```
+when a device is connected, an ALSA MIDI port becomes available 
 
 
 
@@ -260,8 +333,6 @@ sudo apt install
 
 ```
 config
-fix circle icon not showing up in Pd (tcl/tk doesn't like the adwaita circle icon for some reason, so just rename it to force fallback)
-sudo mv /usr/share/icons/Adwaita/cursors/circle /usr/share/icons/Adwaita/cursors/circleORIG
 
 fix sort order. enable en_US.UTF8 in /etc/locale.gen, then
 sudo locale-gen
@@ -314,6 +385,8 @@ in /etc/fstab add "ro" to /boot and /, then add:
 tmpfs /var/log tmpfs nodev,nosuid 0 0
 tmpfs /var/tmp tmpfs nodev,nosuid 0 0
 tmpfs /tmp     tmpfs nodev,nosuid 0 0
+--> find solution for /var/lib/bluetooth
+
 
 stop time sync cause it is not working anyway. (also causes issues with LINK when the clock changes abruptly). need solution
 timedatectl set-ntp false
