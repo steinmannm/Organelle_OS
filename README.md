@@ -260,11 +260,11 @@ sudo mv /usr/share/icons/Adwaita/cursors/circle /usr/share/icons/Adwaita/cursors
 ### ELSE library
 ```
 cd ~/src
-git clone https://github.com/porres/pd-else
+git clone https://github.com/steinmannm/pd-else
 git clone https://github.com/pure-data/pd-lib-builder
 cd pd-else/
-git checkout v.1.0-rc11
-<fix sfz and sfont chdir bug>
+# git checkout v.1.0-rc11
+git checkout bugfix   # sfz and sfont chdir bug fixed
 make install objectsdir=~/Pd/externals
 sudo apt install cmake
 make -j4 sfz-install plaits-install objectsdir=~/Pd/externals
@@ -284,7 +284,7 @@ cd ~/src/pd-else/Code_source/Compiled/audio/sfont~
 make PDLIBDIR=$HOME/Pd/externals install
 make PDLIBDIR=$HOME/Pd/externals localdep_linux
 mv ~/Pd/externals/sfont~/* ~/Pd/externals/else
-rm -r sfont~/
+rm -r ~/Pd/externals/sfont~/
 ```
 
 ### Jack clients
