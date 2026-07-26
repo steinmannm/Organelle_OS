@@ -41,7 +41,9 @@ fi
 
 # Detect platform and select appropriate binary
 PLATFORM=$(cat /proc/device-tree/model)
-if echo "$PLATFORM" | grep -q "Compute Module 4"; then
+if echo "$PLATFORM" | grep -q "Compute Module 4S"; then
+    MOTHER_BIN="mother_cm3"
+elif echo "$PLATFORM" | grep -q "Compute Module 4"; then
     MOTHER_BIN="mother_cm4"
 else
     MOTHER_BIN="mother_cm3"
