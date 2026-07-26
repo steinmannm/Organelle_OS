@@ -1,0 +1,74 @@
+// Definitions for audioinjector.net audio add-on soundcard
+// Bit-banged SPI variant for CM4S: avoids contending with the hardware
+// SPI0 controller (already used elsewhere, e.g. the display) by using
+// the kernel's spi-gpio soft-SPI driver on GPIO40-43 instead of a
+// hardware SPI peripheral (SPI0/SPI2/etc). GPIO44 (2nd CS from the
+// original overlay) is unused here since the WM8731 only needs one CS.
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2711";
+
+	fragment@0 {
+		target = <&i2s_clk_consumer>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	// Software SPI master, bit-banged via plain GPIO toggling.
+	// No hardware SPI peripheral is requested at all, so this cannot
+	// contend with the display or anything else using real SPI0/SPI2.
+	fragment@1 {
+		target-path = "/";
+		__overlay__ {
+			spi_gpio_wm8731: spi-gpio-wm8731 {
+				compatible = "spi-gpio";
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				// GPIO40/41/42 = former SPI2 pins on CM3, still routable
+				// as ALT4/SPI0 on CM4S per the datasheet -- but here we
+				// deliberately do NOT select that ALT function. Instead
+				// they're driven as plain GPIOs by spi-gpio, so no
+				// hardware SPI0 mux contention with the display.
+				sck-gpios  = <&gpio 42 0>; // was SCLK
+				mosi-gpios = <&gpio 41 0>; // was MOSI
+				miso-gpios = <&gpio 40 0>; // WM8731 ctrl iface is write-only;
+				                           // keep wired for safety/future use
+				cs-gpios   = <&gpio 43 1>; // active-low CS, matches original
+				num-chipselects = <1>;
+
+				wm8731@0 {
+					#sound-dai-cells = <0>;
+					compatible = "wlf,wm8731-spi";
+					reg = <0>;
+					spi-max-frequency = <250000>;
+					status = "okay";
+				};
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&sound>;
+		__overlay__ {
+			compatible = "ai,audioinjector-pi-soundcard";
+			i2s-controller = <&i2s_clk_consumer>;
+			status = "okay";
+		};
+	};
+
+	// Force this soft SPI master to register as bus number 2, so it
+	// shows up as /dev/spidev2.0 / spi2.0, matching a hardcoded driver
+	// expecting "spi2". Safe to claim: per the CM4S datasheet, real
+	// hardware SPI2 is not user-accessible on this chip, so bus number
+	// 2 is otherwise unclaimed.
+	fragment@3 {
+		target-path = "/aliases";
+		__overlay__ {
+			spi2 = "/spi-gpio-wm8731";
+		};
+	};
+};
