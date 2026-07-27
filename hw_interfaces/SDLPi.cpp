@@ -32,7 +32,6 @@ void SDLPi::init(){
 
 void SDLPi::clearFlags() {
     encButFlag = 0;
-    encTurnFlag = 0;
     knobFlag = 0;
     keyFlag = 0;
     footswitchFlag = 0;
@@ -48,12 +47,12 @@ void SDLPi::poll(){
         } else if (e.type == SDL_KEYDOWN) {
             switch(e.key.keysym.sym) {
                 case SDLK_UP:
-                    encTurnFlag = 1;
                     encTurn = 0;
+                    encTurnCount -= 1;
                     break;
                 case SDLK_DOWN:
-                    encTurnFlag = 1;
                     encTurn = 1;
+                    encTurnCount += 1;
                     break;
                 case SDLK_RETURN:
                     encButFlag = 1;
@@ -73,12 +72,12 @@ void SDLPi::poll(){
                 encBut = 1;
             }
             if (e.jbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP) {
-                encTurnFlag = 1;
                 encTurn = 0;
+                encTurnCount -= 1;
             }
             if (e.jbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN) {
-                encTurnFlag = 1;
                 encTurn = 1;
+                encTurnCount += 1;
             }
             printf("button: %i\n", e.jbutton.button);
         }

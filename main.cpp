@@ -300,7 +300,7 @@ int main(int argc, char* argv[]) {
 
         // handle events
         if (controls.encButFlag) encoderButton();
-        if (controls.encTurnFlag) encoderInput();
+        if (controls.encTurnCount) encoderInput();
         if (controls.knobFlag) knobsInput();
         if (controls.keyFlag) keysInput();
         if (controls.footswitchFlag) footswitchInput();
@@ -943,35 +943,44 @@ void encoderInput(void) {
 
     if (app.currentScreen == AppData::MENU) {
         app.menuScreenTimeout = MENU_TIMEOUT;
-        if (controls.encTurn == 1) menu.encoderUp();
-        if (controls.encTurn == 0) menu.encoderDown();
+        while (controls.encTurnCount != 0) {
+            if (controls.encTurnCount > 0) menu.encoderUp();
+            else menu.encoderDown();
+            controls.encTurnCount += (controls.encTurnCount > 0) ? -1 : 1;
+        }
     }
     // if in patch mode, send encoder, but only if the patch said it wants encoder access
     if (app.currentScreen == AppData::PATCH) {
-        if (app.isPatchScreenEncoderOverride()) {
-            OSCMessage msgOut("/encoder/turn");
-            msgOut.add(controls.encTurn);
-            msgOut.send(oscBuf);
-            udpSock.writeBuffer(oscBuf.buffer, oscBuf.length);
-        }
-        else {
-            app.currentScreen = AppData::MENU;
-            app.menuScreenTimeout = MENU_TIMEOUT;
-            app.oled(AppData::MENU).newScreen = 1;
+        while (controls.encTurnCount != 0) {
+            if (app.isPatchScreenEncoderOverride()) {
+                OSCMessage msgOut("/encoder/turn");
+                msgOut.add(controls.encTurnCount > 0 ? 1 : 0);
+                msgOut.send(oscBuf);
+                udpSock.writeBuffer(oscBuf.buffer, oscBuf.length);
+            }
+            else {
+                app.currentScreen = AppData::MENU;
+                app.menuScreenTimeout = MENU_TIMEOUT;
+                app.oled(AppData::MENU).newScreen = 1;
+            }
+            controls.encTurnCount += (controls.encTurnCount > 0) ? -1 : 1;
         }
     }
     // same for aux screen
     if (app.currentScreen == AppData::AUX) {
-        if (app.isAuxScreenEncoderOverride()) {
-            OSCMessage msgOut("/encoder/turn");
-            msgOut.add(controls.encTurn);
-            msgOut.send(oscBuf);
-            udpSockAux.writeBuffer(oscBuf.buffer, oscBuf.length);
-        }
-        else {
-            app.currentScreen = AppData::MENU;
-            app.menuScreenTimeout = MENU_TIMEOUT;
-            app.oled(AppData::MENU).newScreen = 1;
+        while (controls.encTurnCount != 0) {
+            if (app.isAuxScreenEncoderOverride()) {
+                OSCMessage msgOut("/encoder/turn");
+                msgOut.add(controls.encTurnCount > 0 ? 1 : 0);
+                msgOut.send(oscBuf);
+                udpSockAux.writeBuffer(oscBuf.buffer, oscBuf.length);
+            }
+            else {
+                app.currentScreen = AppData::MENU;
+                app.menuScreenTimeout = MENU_TIMEOUT;
+                app.oled(AppData::MENU).newScreen = 1;
+            }
+            controls.encTurnCount += (controls.encTurnCount > 0) ? -1 : 1;
         }
     }
 }

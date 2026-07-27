@@ -172,7 +172,7 @@ void CM3GPIO::init(){
 
 void CM3GPIO::clearFlags() {
     encButFlag = 0;
-    encTurnFlag = 0;
+    encTurnCount = 0;
     knobFlag = 0;
     keyFlag = 0;
     footswitchFlag = 0;
@@ -456,14 +456,14 @@ int CM3GPIO::getEncoder(void){
     {
       	lrsum=0;
 		encTurn = 0;
-		encTurnFlag = 1;
+	encTurnCount -= 1;
       	return 1;
     }
-   	if (lrsum == -2)
+    if (lrsum == -2)
     {
       	lrsum=0;
-		encTurn = 1;
-		encTurnFlag = 1;
+	encTurn = 1;
+	encTurnCount += 1;
       	return -1;
     }
    	// lrsum > 0 if the impossible transition 
