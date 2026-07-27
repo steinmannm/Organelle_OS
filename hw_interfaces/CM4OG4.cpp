@@ -305,7 +305,7 @@ void CM4OG4::init(){
 
 void CM4OG4::clearFlags() {
     encButFlag = 0;
-    encTurnFlag = 0;
+    encTurnCount = 0;
     knobFlag = 0;
     keyFlag = 0;
     footswitchFlag = 0;
@@ -519,18 +519,18 @@ int CM4OG4::getEncoder(void){
    	if (lrsum == 2) {
       		lrsum=0;
 		encTurn = 1;
-		encTurnFlag = 1;
-      		return 1;
-    	}
-   	if (lrsum == -2) {
-      		lrsum=0;
+		encTurnCount += 1;
+          return 1;
+    }
+    if (lrsum == -2) {
+          lrsum=0;
 		encTurn = 0;
-		encTurnFlag = 1;
-      		return -1;
-    	}
-   	// lrsum > 0 if the impossible transition 
-   	lrsum=0;
-   	return 0;
+		encTurnCount -= 1;
+          return -1;
+    }
+    // lrsum > 0 if the impossible transition 
+    lrsum=0;
+    return 0;
 }
 
 uint32_t CM4OG4::adcRead(uint8_t adcnum)

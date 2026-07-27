@@ -40,7 +40,7 @@ class CM4OG4
         uint32_t encBut;
         uint32_t encButFlag;
         uint32_t encTurn;
-        uint32_t encTurnFlag;
+        int32_t encTurnCount;
         uint32_t knobFlag;
         uint32_t adcs[8];
         uint32_t footswitch;
