@@ -146,7 +146,9 @@ version = "Version: " + version + build_tag
 
 # Detect machine type
 platform = run_cmd("cat /proc/device-tree/model", timeout=2)
-if "Compute Module 4" in platform:
+if "Compute Module 4S" in platform:
+    machine = "Machine: OG M/S CM4S"
+elif "Compute Module 4" in platform:
     machine = "Machine: OG S2"
 else:
     machine = "Machine: OG M / S"
